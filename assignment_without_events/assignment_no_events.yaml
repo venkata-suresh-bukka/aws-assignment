@@ -1,0 +1,104 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: CloudFormation template to deploy Lambda with S3 and SSM access.
+
+Parameters:
+  S3BucketName:
+    Description: Name of the S3 bucket where the Lambda function code and output will be stored.
+    Type: String
+
+  LambdaCodeS3Key:
+    Description: The S3 key (file name) for the Lambda function code.
+    Type: String
+
+  S3OutputKeyName:
+    Description: The S3 key (file name) where the Lambda function will store the SSM parameter output.
+    Type: String
+
+  SSMParameterName:
+    Description: The name of the SSM parameter to be retrieved.
+    Type: String
+
+Resources:
+  # IAM Role for Lambda Execution
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties: 
+      RoleName: assignment-lambda-ssm-cft-role
+      AssumeRolePolicyDocument: 
+        Version: '2012-10-17'
+        Statement: 
+          - Effect: Allow
+            Principal: 
+              Service: 
+                - lambda.amazonaws.com
+            Action: 
+              - sts:AssumeRole
+
+  # Policy for SSM access
+  LambdaSSMPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: LambdaSSMPolicy
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - ssm:GetParameter
+            Resource: '*'
+      Roles:
+        - Ref: LambdaExecutionRole
+
+  # Policy for S3 access
+  LambdaS3Policy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: LambdaS3Policy
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - s3:PutObject
+              - s3:GetObject
+            Resource: !Sub 'arn:aws:s3:::${S3BucketName}/*'
+      Roles:
+        - Ref: LambdaExecutionRole
+
+  # Policy for CloudWatch Logs access
+  LambdaLogsPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: LambdaLogsPolicy
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - logs:CreateLogGroup
+              - logs:CreateLogStream
+              - logs:PutLogEvents
+            Resource: '*'
+      Roles:
+        - Ref: LambdaExecutionRole
+
+  # Lambda Function
+  MyLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Handler: ssm_read_write_s3.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Code:
+        S3Bucket: !Ref S3BucketName
+        S3Key: !Ref LambdaCodeS3Key
+      Runtime: python3.9
+      Environment:
+        Variables:
+          SSM_PARAMETER_NAME: !Ref SSMParameterName
+          S3_BUCKET_NAME: !Ref S3BucketName
+          S3_KEY_NAME: !Ref S3OutputKeyName
+
+Outputs:
+  LambdaFunctionArn:
+    Description: The ARN of the Lambda function
+    Value: !GetAtt MyLambdaFunction.Arn

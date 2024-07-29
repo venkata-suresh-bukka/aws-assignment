@@ -3,15 +3,15 @@ Description: CloudFormation template to deploy Lambda with S3 and SSM access.
 
 Parameters:
   S3BucketName:
-    Description: Please enter the s3 bucket name for your lambda.
+    Description: Name of the S3 bucket where the Lambda function code and output will be stored.
     Type: String
 
   LambdaCodeS3Key:
-    Description: Please enter the python source code zip file.
+    Description: The S3 key (file name) for the Lambda function code.
     Type: String
 
   S3OutputKeyName:
-    Description: Please enter the output file for storing the data of ssm parameter(.json).
+    Description: The S3 key (file name) where the Lambda function will store the SSM parameter output.
     Type: String
 
   SSMParameterName:
@@ -45,7 +45,7 @@ Resources:
           - Effect: Allow
             Action:
               - ssm:GetParameter
-            Resource: '*'
+            Resource: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${SSMParameterName}'
       Roles:
         - Ref: LambdaExecutionRole
 
@@ -86,12 +86,12 @@ Resources:
   MyLambdaFunction:
     Type: AWS::Lambda::Function
     Properties:
-      Handler: ssm_read_write_s3.lambda_handler
+      Handler: exercise-lambda.lambda_handler
       Role: !GetAtt LambdaExecutionRole.Arn
       Code:
         S3Bucket: !Ref S3BucketName
         S3Key: !Ref LambdaCodeS3Key
-      Runtime: python3.11
+      Runtime: python3.9
       Environment:
         Variables:
           SSM_PARAMETER_NAME: !Ref SSMParameterName

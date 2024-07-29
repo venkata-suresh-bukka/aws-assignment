@@ -91,7 +91,7 @@ Resources:
       Code:
         S3Bucket: !Ref S3BucketName
         S3Key: !Ref LambdaCodeS3Key
-      Runtime: python3.9
+      Runtime: python3.11
       Environment:
         Variables:
           SSM_PARAMETER_NAME: !Ref SSMParameterName

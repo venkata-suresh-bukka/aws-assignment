@@ -3,15 +3,15 @@ Description: CloudFormation template to deploy Lambda with S3 and SSM access.
 
 Parameters:
   S3BucketName:
-    Description: Name of the S3 bucket where the Lambda function code and output will be stored.
+    Description: Please provide the S3 bucket which contains source code.
     Type: String
 
   LambdaCodeS3Key:
-    Description: The S3 key (file name) for the Lambda function code.
+    Description: Please provide python source code zip file name.
     Type: String
 
   S3OutputKeyName:
-    Description: The S3 key (file name) where the Lambda function will store the SSM parameter output.
+    Description: Please provide the file name which will store the SSM parameter output(.json).
     Type: String
 
   SSMParameterName:
